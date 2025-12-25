@@ -21,8 +21,14 @@ export async function handleChatCommand(context: AppContext): Promise<void> {
   const projectContext = { ...context, args: { ...args, path: projectRoot } };
 
   let indexer = await getIndexer(projectRoot);
+  let indexAttempts = 0;
 
   while (!(await indexer.isIndexUpToDate())) {
+    if (indexAttempts > 0) {
+      logger.warn('Index is still incomplete after update. Proceeding with chat anyway to avoid loop.');
+      break;
+    }
+
     logger.warn(`Project index is incomplete or out-of-date for: ${projectRoot}`);
     const { shouldIndex } = await inquirer.prompt([{
       type: 'confirm',
@@ -35,12 +41,13 @@ export async function handleChatCommand(context: AppContext): Promise<void> {
       await handleIndexCommand(projectContext);
       // Re-initialize the indexer to load the updated cache from disk
       indexer = await getIndexer(projectRoot);
+      indexAttempts++;
     } else {
       logger.info('Chat session cancelled. Please run the index command to proceed.');
       return;
     }
   }
-  
+
   const { default: ora } = await import('ora');
 
   return new Promise((resolve) => {
@@ -78,7 +85,7 @@ export async function handleChatCommand(context: AppContext): Promise<void> {
       rl.prompt();
     }).on('close', () => {
       logger.info('Chat session ended.');
-      resolve(); 
+      resolve();
     });
   });
 }
