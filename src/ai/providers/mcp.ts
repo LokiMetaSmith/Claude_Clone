@@ -5,7 +5,8 @@
 
 import { AIProvider } from './interface.js';
 import { Logger } from '../../types.js';
-import { Client, StdioClientTransport } from '@modelcontextprotocol/sdk';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { McpConfig } from '../../config/schema.js';
 
 export class McpProvider implements AIProvider {
@@ -68,7 +69,7 @@ export class McpProvider implements AIProvider {
 
       // The resource content is expected to be a stringified JSON array of numbers.
       if (resource.contents.length > 0 && resource.contents[0].text) {
-        return JSON.parse(resource.contents[0].text);
+        return JSON.parse(resource.contents[0].text as string);
       }
       return [];
     } catch (err: any) {

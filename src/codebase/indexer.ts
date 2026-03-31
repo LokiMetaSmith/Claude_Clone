@@ -68,6 +68,7 @@ export class Indexer {
     const allFiles = await scanProject(this.projectRoot);
     const files = allFiles.filter(file => VALID_EXTENSIONS.has(path.extname(file).toLowerCase()));
     const cachedFiles = Object.keys(this.cache);
+
     if (files.length !== cachedFiles.length) return false;
     for (const file of files) {
       if (await this.isEntryStale(file)) return false;
