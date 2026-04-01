@@ -20,7 +20,7 @@ const MAX_FILE_SIZE_BYTES = 1024 * 1024; // 1MB
 
 export async function runIndex(context: AppContext, onUpdate: AgentCallback) {
   const { logger, aiProvider, args, profile } = context;
-  const projectRoot = profile.cwd;
+  const projectRoot = profile.cwd as string;
   const indexer = await getIndexer(projectRoot);
 
   try {
@@ -80,6 +80,8 @@ export async function runIndex(context: AppContext, onUpdate: AgentCallback) {
         const stats = await fs.stat(file);
         if (stats.size > MAX_FILE_SIZE_BYTES) {
           logger.warn(`Skipping large file: ${file} (${(stats.size / 1024).toFixed(2)} KB)`);
+          await indexer.updateEntry(file, { status: "skipped" });
+          onUpdate({ type: "action", content: "file-processed" });
           continue;
         }
 
@@ -96,6 +98,7 @@ export async function runIndex(context: AppContext, onUpdate: AgentCallback) {
         const errorMessage = `Could not process file ${file}: ${(error as Error).message}`;
         onUpdate({ type: 'error', content: errorMessage });
         failedFiles.push(file);
+        await indexer.updateEntry(file, { status: "failed", error: errorMessage });
       }
     }
 
@@ -120,7 +123,7 @@ export async function runIndex(context: AppContext, onUpdate: AgentCallback) {
 
 export async function runInit(context: AppContext, onUpdate: AgentCallback): Promise<void> {
   const { logger, aiProvider, args, profile } = context;
-  const projectRoot = profile.cwd;
+  const projectRoot = profile.cwd as string;
   
   try {
     onUpdate({ type: 'thought', content: `Initializing project at ${projectRoot}...` });
